@@ -1,8 +1,10 @@
-# Latency Inference Engine
+# TrueSight Latency Engine
 
-This project implements a high-performance machine learning inference engine designed to demonstrate and validate the throughput differences between **Real-Time (Online)** and **Batch (Offline)** processing strategies.
+**A High-Performance Inference Engine for Real-Time Fake News Detection.**
 
-Built with **FastAPI** and **Scikit-Learn**, the system serves a Fake News Detection model under high-concurrency conditions. It addresses the scalability challenges inherent in serving ML models by implementing vectorization techniques to minimize CPU overhead and network latency.
+This project bridges the gap between **training a model** and **serving it at scale**. It implements a production-grade **FastAPI** system designed to handle high-concurrency traffic, demonstrating the critical performance difference between **Real-Time (Online)** and **Batch (Offline)** inference strategies.
+
+---
 
 ## System Architecture
 
@@ -31,33 +33,53 @@ graph TD
 
 ```
 
-## Key Features
+---
 
-* **Global Model State**: Implements a "Load Once" pattern where the ML model and vectorizer are loaded into memory on application startup, eliminating disk I/O latency during request processing.
-* **Vectorized Batch Processing**: The batch endpoint utilizes Scikit-Learn's internal vectorization optimization to transform multiple text inputs simultaneously, leveraging CPU SIMD instructions rather than iterative looping.
-* **Asynchronous Concurrency**: Built on Uvicorn (ASGI) to handle non-blocking concurrent requests efficiently.
+## Key Differentiators
+
+Unlike standard model deployments, this engine is optimized for engineering efficiency:
+
+1. **Global Model State (Cold Start Optimization):**
+* **Standard:** Loads the model inside the function (slows down every request).
+* **TrueSight:** Loads the model into global memory *once* on startup, making inference instant.
+
+
+2. **Dual-Mode Architecture:**
+* **The Taxi (Real-Time):** Optimized for single, low-latency requests (e.g., Chatbots).
+* **The Bus (Batch Processing):** Optimized for high-throughput volume (e.g., Social Media Feeds).
+
+
+3. **Stress-Tested Reality:**
+* Validated not just with code, but with a **100-User Concurrent Swarm** using Locust.
+
+
+
+---
 
 ## Performance Benchmarks
 
-A load test was conducted using **Locust** with **100 concurrent users** to simulate high-traffic conditions. The results compare the throughput of standard single-item inference versus batch inference.
+We conducted a stress test simulating **100 concurrent users** attacking the API.
 
-| Metric | Real-Time Endpoint (`/predict`) | Batch Endpoint (`/predict_batch`) | Performance Delta |
+| Metric | Real-Time API (The Taxi) | Batch API (The Bus) | Result |
 | --- | --- | --- | --- |
-| **Concurrency** | 100 Users | 100 Users | - |
-| **Requests Per Second** | 5.1 RPS | 5.6 RPS | +9.8% |
-| **Items Processed/Sec** | **5.1 items/s** | **28.0 items/s** | **~5.5x Throughput Increase** |
-| **Avg. Latency** | ~2035 ms | ~2038 ms | Negligible impact |
+| **Requests Per Sec** | ~5.1 RPS | ~5.6 RPS | Slight Gain |
+| **Items Processed/Sec** | **5.1 items/s** | **28.0 items/s** | **5.5x Throughput** 🚀 |
+| **Latency Strategy** | Serial Processing | Vectorized Parallelism | **Massive Efficiency** |
 
-**Analysis**: While the request rate (RPS) remained similar due to network bottlenecks, the **effective throughput** (items classified per second) increased by roughly 550% when using the batch strategy. This validates that batching significantly reduces the per-item computational overhead.
+*Conclusion: By switching to Batch Inference, we increased the system's capacity by over 500% without changing the hardware.*
 
-## Technical Stack
+---
 
-* **Framework**: FastAPI
-* **Server**: Uvicorn
-* **ML Libraries**: Scikit-Learn, Joblib, Pandas
-* **Testing**: Locust (Load Testing)
+## Tech Stack
 
-## Installation and Usage
+* **Serving Framework:** FastAPI, Uvicorn (Asynchronous Server)
+* **Machine Learning:** Scikit-Learn, Joblib (Vectorization & Inference)
+* **Stress Testing:** Locust (Distributed Load Testing)
+* **Client Testing:** cURL, Python Requests
+
+---
+
+## Installation & Usage
 
 ### 1. Prerequisites
 
@@ -68,27 +90,25 @@ pip install fastapi uvicorn scikit-learn joblib locust
 
 ```
 
-### 2. Running the Server
-
-Start the inference engine locally:
+### 2. Start the Engine
 
 ```bash
 uvicorn main:app --reload
 
 ```
 
-The API will be available at `http://127.0.0.1:8000`.
+*The server will start at `http://127.0.0.1:8000*`
 
-### 3. Running Stress Tests
-
-To replicate the benchmark results, start the Locust swarm:
+### 3. Run the Stress Test
 
 ```bash
 locust -f locustfile.py
 
 ```
 
-Access the Locust dashboard at `http://localhost:8089` and configure the test for 100 users.
+*Open `http://localhost:8089` to launch the attack swarm.*
+
+---
 
 ## Project Structure
 
@@ -96,4 +116,3 @@ Access the Locust dashboard at `http://localhost:8089` and configure the test fo
 * `locustfile.py`: Load testing script defining user behaviors for single and batch requests.
 * `best_fake_news_model.pkl`: Serialized Machine Learning model.
 * `tfidf_vectorizer_best.pkl`: Serialized TF-IDF vectorizer.
-
